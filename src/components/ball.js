@@ -1,48 +1,51 @@
-import { defineComponent, h, ref, onMounted } from '@vue/runtime-core';
+import { defineComponent, h, reactive, onMounted, onBeforeUnmount } from '@vue/runtime-core';
 import game from '../game';
 
 export default defineComponent({
     setup() {
-        const x = ref(80), y = ref(100);
+        const postion = reactive({x: 80, y: 100});
+        const changeX = Math.abs(Math.sin(Math.random() * Math.PI * 2 + 4) * (2 + Math.random() * 2)),
+            changeY = Math.abs(Math.cos(Math.random() * Math.PI * 2 + 4) * (2 + Math.random() * 2))
+        let xType = 'add', yType = 'add';
+        const changePosition = () => {
+            if(postion.x - changeX <= 50) {
+                postion.x += changeX;
+                xType = 'add';
+            } else if(postion.x + changeX >= game.screen.width - 50) {
+                postion.x -= changeX;
+                xType = 'less';
+            } else {
+                if(xType === 'add') {
+                    postion.x += changeX;
+                } else {
+                    postion.x -= changeX;
+                }
+            }
+            if(postion.y - changeY <= 50) {
+                postion.y += changeY;
+                yType = 'add';
+            } else if(postion.y + changeY >= game.screen.height - 50) {
+                postion.y -= changeY;
+                yType = 'less';
+            } else {
+                if(yType === 'add') {
+                    postion.y += changeY;
+                } else {
+                    postion.y -= changeY;
+                }
+            }
+        }
         onMounted(() => {
-            const changeX = Math.abs(Math.sin(Math.random() * Math.PI * 2 + 4) * (2 + Math.random() * 2)),
-                changeY = Math.abs(Math.cos(Math.random() * Math.PI * 2 + 4) * (2 + Math.random() * 2))
-            let xType = 'add', yType = 'add';
-            game.ticker.add(() => {
-                if(x.value - changeX <= 50) {
-                    x.value += changeX;
-                    xType = 'add';
-                } else if(x.value + changeX >= game.screen.width - 50) {
-                    x.value -= changeX;
-                    xType = 'less';
-                } else {
-                    if(xType === 'add') {
-                        x.value += changeX;
-                    } else {
-                        x.value -= changeX;
-                    }
-                }
-                if(y.value - changeY <= 50) {
-                    y.value += changeY;
-                    yType = 'add';
-                } else if(y.value + changeY >= game.screen.height - 50) {
-                    y.value -= changeY;
-                    yType = 'less';
-                } else {
-                    if(yType === 'add') {
-                        y.value += changeX;
-                    } else {
-                        y.value -= changeX;
-                    }
-                }
-            });
+            game.ticker.add(changePosition);
+        });
+        onBeforeUnmount(() => {
+            game.ticker.remove(changePosition);
         });
         return {
-            x,
-            y
+            postion
         }
     },
     render(ctx) {
-        return h('ball', {x: ctx.x, y: ctx.y});
+        return h('ball', {...ctx.postion});
     }
 });
